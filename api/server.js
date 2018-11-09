@@ -88,5 +88,76 @@ server.delete('/api/projects/:id', (req, res) => {
     });
 });
 
+// --ACTION ENDPOINTS--
+server.get('/api/actions', (req, res) => {
+  actionDb
+    .get()
+    .then((actions) => res.status(200).json({ actions }))
+    .catch((err) => {
+      res.status(500).json({ message: 'could not find actions', err });
+    });
+});
+
+server.get('/api/actions/:id', (req, res) => {
+  const { id } = req.params;
+  actionDb
+    .get(id)
+    .then((action) => res.status(200).json({ action }))
+    .catch((err) => {
+      res.status(500).json({ message: 'could not find action', err });
+    });
+});
+
+server.post('/api/actions', (req, res) => {
+  const action = req.body;
+  actionDb
+    .insert(action)
+    .then((id) => {
+      actionDb.get(id.id).then((actionById) => {
+        res.status(200).json({ actionById });
+      });
+    })
+    .catch((err) => {
+      let message = 'error creating action';
+      if (err.errno === 19) {
+        message = 'please provide a name, description and completed status';
+      }
+      res.status(400).json({ message, err });
+    });
+});
+
+server.put('/api/actions/:id', (req, res) => {
+  const { id } = req.params;
+  const changes = req.body;
+  actionDb
+    .update(id, changes)
+    .then((count) => {
+      if (count) {
+        res.status(200).json({ message: `action updated successfully` });
+      } else {
+        res.status(404).json({ message: 'no prject with that id exists' });
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({ error: 'the action could not be updated', err });
+    });
+});
+
+server.delete('/api/actions/:id', (req, res) => {
+  const { id } = req.params;
+  actionDb
+    .remove(id)
+    .then((count) => {
+      if (count) {
+        res.status(200).json({ message: `action deleted successfully` });
+      } else {
+        res.status(404).json({ message: 'no action with that id exists' });
+      }
+    })
+    .catch((err) => {
+      res.status(500).json({ error: 'the action could not be deleted', err });
+    });
+});
+
 // --EXPORT--
 module.exports = server;
